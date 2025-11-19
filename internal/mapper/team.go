@@ -1,0 +1,32 @@
+package mapper
+
+import (
+	"github.com/Leganyst/avitoTrainee/internal/controller/dto"
+	"github.com/Leganyst/avitoTrainee/internal/model"
+)
+
+func MapTeamToResponse(team model.Team) dto.TeamResponse {
+	return dto.TeamResponse{
+		TeamName: team.Name,
+		Members:  MapUsersToTeamMemberDTO(team.Users),
+	}
+}
+
+func MapCreateTeamRequestToModel(req dto.CreateTeamRequest) model.Team {
+	return model.Team{
+		Name:  req.TeamName,
+		Users: MapTeamMemberDTOsToUsers(req.Members),
+	}
+}
+
+func MapUsersToTeamMemberDTO(users []model.User) []dto.TeamMemberDTO {
+	members := make([]dto.TeamMemberDTO, 0, len(users))
+	for _, user := range users {
+		members = append(members, dto.TeamMemberDTO{
+			UserID:   user.UserID,
+			Username: user.Username,
+			IsActive: user.IsActive,
+		})
+	}
+	return members
+}
