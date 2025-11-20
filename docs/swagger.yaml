@@ -1,0 +1,8 @@
+basePath: /
+info:
+  contact: {}
+  description: Service for assigning reviewers to pull requests.
+  title: PR Reviewer Service API
+  version: "1.0"
+paths: {}
+swagger: "2.0"
