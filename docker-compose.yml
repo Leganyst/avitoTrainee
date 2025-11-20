@@ -1,31 +1,37 @@
 services:
-  # app:
-  #   build: .
-  #   container_name: go-app
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     APP_PORT: 8080
-  #     DB_HOST: db
-  #     DB_PORT: 5432
-  #     DB_USER: app
-  #     DB_PASS: app
-  #     DB_NAME: app
-  #   depends_on:
-  #     - db 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: avito-trainee:local
+    container_name: app
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
-    image: postgres:17
+    image: postgres:17-alpine
     container_name: db
     restart: always
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: app
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - .env
     ports:
-      - "5432:5432" 
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
