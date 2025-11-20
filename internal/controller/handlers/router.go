@@ -1,28 +1,25 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/Leganyst/avitoTrainee/internal/service"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func RegisterRoutes(r *gin.Engine, db *gorm.DB,
-					teamSvc service.TeamService,
-					userSvc service.UserService,
-					prSvc service.PRService) {
-
+// RegisterRoutes прокидывает зависимости в хэндлеры и вешает эндпоинты.
+func RegisterRoutes(r *gin.Engine,
+	teamSvc service.TeamService,
+	userSvc service.UserService,
+	prSvc service.PRService,
+) {
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "OK"})
+		c.JSON(http.StatusOK, gin.H{"status": "OK"})
 	})
-
-	teamHandler := NewTeamHandler(teamSvc)
-	userHandler := 
 
 	api := r.Group("/api")
 
-	{
-		api.POST("/team/add", teamHandler.CreateTeam)
-		api.GET("/team/get", teanHandler.GetTeam)
-	}
-
+	registerTeamRoutes(api, teamSvc)
+	registerUserRoutes(api, userSvc)
+	registerPRRoutes(api, prSvc)
 }

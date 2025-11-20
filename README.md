@@ -31,7 +31,6 @@
 - [x] Определить доменные модели `User` и `Team` (структуры в пакете `model`).
 - [x] Определить доменную модель `PullRequest` с полями по `openapi.yml`.
 - [x] Ввести пакеты `errs` для разных слоёв (репозиторий/сервис) с явными перечислениями ошибок.
-- [ ] Ввести единый тип доменной ошибки (например, `AppError` с `code` из `ErrorResponse` в `openapi.yml`).
 - [x] Реализовать базовый сервисный слой для команд:
   - интерфейс `TeamService`
   - методы `CreateTeam` и `GetTeam`.
@@ -84,39 +83,32 @@
 
 #### 4.1 Команды
 
-- [ ] **POST /team/add**
+- [x] **POST /team/add**
   - Создать новую команду с участниками.
   - Если команда уже существует — вернуть `400` + `error.code = TEAM_EXISTS`.
-  - При создании команды:
-    - создать/обновить пользователей с привязкой к команде;
-    - обеспечить уникальность имени команды.
-- [ ] **GET /team/get**
-  - Получить команду с участниками по `team_name`.
-  - При отсутствии команды — вернуть `404` + `ErrorResponse` (`NOT_FOUND`).
+- [x] **GET /team/get**
+  - Получить команду с участниками по `team_name` (404 при отсутствии).
 
 #### 4.2 Пользователи
 
-- [ ] **POST /users/setIsActive**
-  - Установить флаг активности пользователя.
-  - Обновить `is_active` в БД.
-  - При отсутствии пользователя — вернуть `404`.
-
-- [ ] **GET /users/getReview**
-  - Вернуть список PR, где пользователь назначен ревьювером:
-    - `pull_request_id`
-    - `pull_request_name`
-    - `author_id`
-    - `status`.
-  - Обработать случай отсутствия PR (возвращать пустой список).
+- [x] **POST /users/setIsActive**
+  - Установить флаг активности пользователя (404 при отсутствии).
+- [x] **GET /users/getReview**
+  - Вернуть список PR, где пользователь назначен ревьювером (пустой список, если ничего нет).
 
 #### 4.3 Pull Request’ы
 
-- [ ] **POST /pullRequest/create**
-  - Завязать сервис на HTTP: принимать входной DTO, вызывать `PRService.CreatePR`, маппить доменные ошибки (`ErrUserNotFound`, `ErrPRExists`, `ErrNoCandidates`) в HTTP-коды/ответы.
-- [ ] **POST /pullRequest/merge**
-  - Подключить сервисный метод `Merge`, вернуть итоговую DTO.
-- [ ] **POST /pullRequest/reassign**
+- [x] **POST /pullRequest/create**
+  - Принимать DTO, вызывать `PRService.CreatePR`, маппить `ErrUserNotFound` (404), `ErrPRExists` (409 `PR_EXISTS`), `ErrNoCandidates`.
+- [x] **POST /pullRequest/merge**
+  - Вызывать `Merge`, отдавать DTO, 404 при отсутствии PR.
+- [x] **POST /pullRequest/reassign**
   - Вызывать `Reassign`, маппить `ErrPRMerged`, `ErrReviewerMissing`, `ErrNoCandidates` в `409` + `ErrorResponse`.
+
+### 4.4 Документация OpenAPI
+
+- Файл спецификации: `openapi.yml`.
+- Сервис отдаёт Swagger UI по `http://localhost:8080/swagger/` и сам `openapi.yml` по `http://localhost:8080/openapi.yml` — достаточно запустить сервер (`go run ./cmd/main.go`) и открыть ссылку в браузере, UI будет отправлять запросы напрямую в работающий Gin.
 
 ### 5. Обработка ошибок
 
