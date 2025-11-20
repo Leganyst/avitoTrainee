@@ -5,6 +5,7 @@ import (
 	"github.com/Leganyst/avitoTrainee/internal/model"
 )
 
+// MapUserToDTO превращает модель User в DTO для ответов.
 func MapUserToDTO(user model.User) dto.UserDTO {
 	return dto.UserDTO{
 		UserID:   user.UserID,
@@ -14,6 +15,7 @@ func MapUserToDTO(user model.User) dto.UserDTO {
 	}
 }
 
+// MapUsersToDTO превращает список User в DTO без лишней логики.
 func MapUsersToDTO(users []model.User) []dto.UserDTO {
 	dtos := make([]dto.UserDTO, 0, len(users))
 	for _, user := range users {
@@ -22,6 +24,7 @@ func MapUsersToDTO(users []model.User) []dto.UserDTO {
 	return dtos
 }
 
+// MapTeamMemberDTOToUser собирает модель User из DTO участника команды.
 func MapTeamMemberDTOToUser(member dto.TeamMemberDTO) model.User {
 	return model.User{
 		UserID:   member.UserID,
@@ -30,6 +33,7 @@ func MapTeamMemberDTOToUser(member dto.TeamMemberDTO) model.User {
 	}
 }
 
+// MapTeamMemberDTOsToUsers собирает модели User из списка DTO участников.
 func MapTeamMemberDTOsToUsers(members []dto.TeamMemberDTO) []model.User {
 	users := make([]model.User, len(members))
 	for i := range members {
@@ -38,6 +42,7 @@ func MapTeamMemberDTOsToUsers(members []dto.TeamMemberDTO) []model.User {
 	return users
 }
 
+// MapUserRequestToUser конвертирует payload запроса в модель User.
 func MapUserRequestToUser(req dto.UserRequest) model.User {
 	return model.User{
 		UserID:   req.UserID,
