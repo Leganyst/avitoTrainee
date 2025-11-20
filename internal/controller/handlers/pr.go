@@ -28,7 +28,19 @@ func registerPRRoutes(r gin.IRouter, prSvc service.PRService) {
 	group.POST("/reassign", handler.ReassignReviewer)
 }
 
-// CreatePR создаёт PR и назначает ревьюверов согласно бизнес-правилам.
+// CreatePR godoc
+// @Summary      Создать PR
+// @Description  Создаёт PR и автоматически назначает доступных ревьюверов.
+// @Tags         PullRequests
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.CreatePRRequest  true  "Данные PR"
+// @Success      201      {object}  dto.CreatePRResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      404      {object}  dto.ErrorResponse
+// @Failure      409      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /api/pullRequest/create [post]
 func (h *PRHandler) CreatePR(c *gin.Context) {
 	var req dto.CreatePRRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -52,7 +64,18 @@ func (h *PRHandler) CreatePR(c *gin.Context) {
 	})
 }
 
-// MergePR помечает PR как MERGED (идемпотентно).
+// MergePR godoc
+// @Summary      Merge PR
+// @Description  Переводит PR в состояние MERGED (идемпотентно).
+// @Tags         PullRequests
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.MergePRRequest  true  "Идентификатор PR"
+// @Success      200      {object}  dto.MergePRResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      404      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /api/pullRequest/merge [post]
 func (h *PRHandler) MergePR(c *gin.Context) {
 	var req dto.MergePRRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -75,7 +98,19 @@ func (h *PRHandler) MergePR(c *gin.Context) {
 	})
 }
 
-// ReassignReviewer заменяет ревьювера на другого из его команды.
+// ReassignReviewer godoc
+// @Summary      Переназначить ревьювера
+// @Description  Заменяет ревьювера на другого активного участника его команды.
+// @Tags         PullRequests
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.ReassgnRequest  true  "Параметры переназначения"
+// @Success      200      {object}  dto.ReassignResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      404      {object}  dto.ErrorResponse
+// @Failure      409      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /api/pullRequest/reassign [post]
 func (h *PRHandler) ReassignReviewer(c *gin.Context) {
 	var req dto.ReassgnRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -5,14 +5,6 @@ import (
 	"github.com/Leganyst/avitoTrainee/internal/model"
 )
 
-// MapTeamToResponse упаковывает команду и её юзеров в DTO ответа.
-func MapTeamToResponse(team model.Team) dto.TeamResponse {
-	return dto.TeamResponse{
-		TeamName: team.Name,
-		Members:  MapUsersToTeamMemberDTO(team.Users),
-	}
-}
-
 // MapCreateTeamRequestToModel переводит входящий запрос создания команды в модель.
 func MapCreateTeamRequestToModel(req dto.CreateTeamRequest) model.Team {
 	return model.Team{
@@ -22,10 +14,10 @@ func MapCreateTeamRequestToModel(req dto.CreateTeamRequest) model.Team {
 }
 
 // MapUsersToTeamMemberDTO переводит модельных юзеров в DTO участников команды.
-func MapUsersToTeamMemberDTO(users []model.User) []dto.TeamMemberDTO {
-	members := make([]dto.TeamMemberDTO, 0, len(users))
+func MapUsersToTeamMemberDTO(users []model.User) []dto.TeamMember {
+	members := make([]dto.TeamMember, 0, len(users))
 	for _, user := range users {
-		members = append(members, dto.TeamMemberDTO{
+		members = append(members, dto.TeamMember{
 			UserID:   user.UserID,
 			Username: user.Username,
 			IsActive: user.IsActive,

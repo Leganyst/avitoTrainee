@@ -27,7 +27,18 @@ func registerUserRoutes(r gin.IRouter, userSvc service.UserService) {
 	group.GET("/getReview", handler.GetUserReviews)
 }
 
-// SetActive обновляет флаг активности пользователя.
+// SetActive godoc
+// @Summary      Обновить активность пользователя
+// @Description  Ставит или снимает флаг активности пользователя.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.UserRequest  true  "Параметры активности"
+// @Success      200      {object}  dto.UserResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      404      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /api/users/setIsActive [post]
 func (h *UserHandler) SetActive(c *gin.Context) {
 	var req dto.UserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -46,7 +57,18 @@ func (h *UserHandler) SetActive(c *gin.Context) {
 	})
 }
 
-// GetUserReviews возвращает PR, где пользователь выступает ревьювером.
+// GetUserReviews godoc
+// @Summary      Получить PR пользователя
+// @Description  Возвращает PR, где пользователь выступает ревьювером.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        user_id  query     string  true  "Идентификатор пользователя"
+// @Success      200      {object}  dto.UserReviewResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      404      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /api/users/getReview [get]
 func (h *UserHandler) GetUserReviews(c *gin.Context) {
 	userID := c.Query("user_id")
 	if userID == "" {

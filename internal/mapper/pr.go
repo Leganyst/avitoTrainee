@@ -17,8 +17,8 @@ func MapCreatePRRequestToModel(req dto.CreatePRRequest) model.PullRequest {
 }
 
 // MapPullRequestToDTO собирает расширенный DTO из модели PR с ревьюверами.
-func MapPullRequestToDTO(pr model.PullRequest) dto.PullRequestDTO {
-	return dto.PullRequestDTO{
+func MapPullRequestToDTO(pr model.PullRequest) dto.PullRequest {
+	return dto.PullRequest{
 		PRID:              pr.PRID,
 		Name:              pr.Name,
 		AuthorID:          pr.AuthorID,
@@ -30,8 +30,8 @@ func MapPullRequestToDTO(pr model.PullRequest) dto.PullRequestDTO {
 }
 
 // MapPullRequestShortToDTO делает короткий DTO для списочных ответов.
-func MapPullRequestShortToDTO(pr model.PullRequest) dto.PullRequestShortDTO {
-	return dto.PullRequestShortDTO{
+func MapPullRequestShortToDTO(pr model.PullRequest) dto.PullRequestShort {
+	return dto.PullRequestShort{
 		PRID:     pr.PRID,
 		Name:     pr.Name,
 		AuthorID: pr.AuthorID,
@@ -40,8 +40,8 @@ func MapPullRequestShortToDTO(pr model.PullRequest) dto.PullRequestShortDTO {
 }
 
 // MapPullRequestsToShortDTOs переводит несколько PR в короткие DTO.
-func MapPullRequestsToShortDTOs(prs []model.PullRequest) []dto.PullRequestShortDTO {
-	shorts := make([]dto.PullRequestShortDTO, 0, len(prs))
+func MapPullRequestsToShortDTOs(prs []model.PullRequest) []dto.PullRequestShort {
+	shorts := make([]dto.PullRequestShort, 0, len(prs))
 	for _, pr := range prs {
 		shorts = append(shorts, MapPullRequestShortToDTO(pr))
 	}

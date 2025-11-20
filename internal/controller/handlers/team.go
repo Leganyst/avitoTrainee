@@ -27,7 +27,17 @@ func registerTeamRoutes(r gin.IRouter, teamSvc service.TeamService) {
 	group.GET("/get", handler.GetTeam)
 }
 
-// CreateTeam создаёт команду и пользователей
+// CreateTeam godoc
+// @Summary      Создать команду
+// @Description  Создаёт команду и пользователей, если их ещё нет.
+// @Tags         Teams
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.CreateTeamRequest  true  "Данные команды"
+// @Success      201      {object}  dto.TeamResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /api/team/add [post]
 func (h *TeamHandler) CreateTeam(c *gin.Context) {
 	var req dto.CreateTeamRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -51,13 +61,28 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, dto.TeamResponse{
+	teamDTO := dto.Team{
 		TeamName: team.Name,
 		Members:  mapper.MapUsersToTeamMemberDTO(team.Users),
+	}
+
+	c.JSON(http.StatusCreated, dto.TeamResponse{
+		Team: teamDTO,
 	})
 }
 
-// GetTeam возвращает команду с участниками по имени.
+// GetTeam godoc
+// @Summary      Получить команду
+// @Description  Возвращает команду и участников по имени.
+// @Tags         Teams
+// @Accept       json
+// @Produce      json
+// @Param        team_name  query     string  true  "Имя команды"
+// @Success      200        {object}  dto.Team
+// @Failure      400        {object}  dto.ErrorResponse
+// @Failure      404        {object}  dto.ErrorResponse
+// @Failure      500        {object}  dto.ErrorResponse
+// @Router       /api/team/get [get]
 func (h *TeamHandler) GetTeam(c *gin.Context) {
 	teamName := c.Query("team_name")
 	if teamName == "" {
@@ -76,7 +101,7 @@ func (h *TeamHandler) GetTeam(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.TeamResponse{
+	c.JSON(http.StatusOK, dto.Team{
 		TeamName: team.Name,
 		Members:  mapper.MapUsersToTeamMemberDTO(team.Users),
 	})

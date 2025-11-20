@@ -1,8 +1,549 @@
 basePath: /
+definitions:
+  CreatePRRequest:
+    description: Запрос на создание PR.
+    properties:
+      author_id:
+        description: Автор PR.
+        example: u1
+        type: string
+      pull_request_id:
+        description: Идентификатор PR.
+        example: pr-1001
+        type: string
+      pull_request_name:
+        description: Название PR.
+        example: Add search endpoint
+        type: string
+    required:
+    - author_id
+    - pull_request_id
+    - pull_request_name
+    type: object
+  CreatePRResponse:
+    description: Ответ на создание PR.
+    properties:
+      pr:
+        allOf:
+        - $ref: '#/definitions/PullRequest'
+        description: Созданный PR.
+    required:
+    - pr
+    type: object
+  CreateTeamRequest:
+    description: Запрос на создание команды.
+    properties:
+      members:
+        description: Массив участников команды.
+        items:
+          $ref: '#/definitions/TeamMember'
+        type: array
+      team_name:
+        description: Имя команды.
+        example: backend
+        type: string
+    required:
+    - members
+    - team_name
+    type: object
+  ErrorBody:
+    description: Содержит код и сообщение ошибки.
+    properties:
+      code:
+        description: Код ошибки.
+        example: NOT_FOUND
+        type: string
+      message:
+        description: Сообщение ошибки.
+        example: resource not found
+        type: string
+    required:
+    - code
+    - message
+    type: object
+  ErrorResponse:
+    description: Стандартный ответ с ошибкой.
+    properties:
+      error:
+        allOf:
+        - $ref: '#/definitions/ErrorBody'
+        description: Детали ошибки.
+    required:
+    - error
+    type: object
+  MergePRRequest:
+    description: Запрос на merge PR.
+    properties:
+      pull_request_id:
+        description: Идентификатор PR.
+        example: pr-1001
+        type: string
+    required:
+    - pull_request_id
+    type: object
+  MergePRResponse:
+    description: Ответ на merge PR.
+    properties:
+      pr:
+        allOf:
+        - $ref: '#/definitions/PullRequest'
+        description: PR после merge.
+    required:
+    - pr
+    type: object
+  PullRequest:
+    description: Полное представление PR.
+    properties:
+      assigned_reviewers:
+        description: Назначенные ревьюверы (до двух user_id).
+        example:
+        - u2
+        - u3
+        items:
+          type: string
+        type: array
+      author_id:
+        description: Автор PR.
+        example: u1
+        type: string
+      created_at:
+        description: Время создания.
+        example: "2025-10-25T12:00:00Z"
+        type: string
+      merged_at:
+        description: Время merge (если есть).
+        example: "2025-10-26T09:30:00Z"
+        type: string
+      pull_request_id:
+        description: Идентификатор PR.
+        example: pr-1001
+        type: string
+      pull_request_name:
+        description: Название PR.
+        example: Add search endpoint
+        type: string
+      status:
+        description: Статус PR.
+        example: OPEN
+        type: string
+    required:
+    - assigned_reviewers
+    - author_id
+    - pull_request_id
+    - pull_request_name
+    - status
+    type: object
+  PullRequestShort:
+    description: Короткое описание PR.
+    properties:
+      author_id:
+        description: Автор PR.
+        example: u1
+        type: string
+      pull_request_id:
+        description: Идентификатор PR.
+        example: pr-1001
+        type: string
+      pull_request_name:
+        description: Название PR.
+        example: Add search endpoint
+        type: string
+      status:
+        description: Статус PR.
+        example: OPEN
+        type: string
+    required:
+    - author_id
+    - pull_request_id
+    - pull_request_name
+    - status
+    type: object
+  ReassgnRequest:
+    description: Запрос на замену ревьювера.
+    properties:
+      old_user_id:
+        description: user_id ревьювера, которого заменяем.
+        example: u2
+        type: string
+      pull_request_id:
+        description: Идентификатор PR.
+        example: pr-1001
+        type: string
+    required:
+    - old_user_id
+    - pull_request_id
+    type: object
+  ReassignResponse:
+    description: Ответ на замену ревьювера.
+    properties:
+      pr:
+        allOf:
+        - $ref: '#/definitions/PullRequest'
+        description: Текущий PR.
+      replaced_by:
+        description: user_id, который заменил предыдущего ревьювера.
+        example: u5
+        type: string
+    required:
+    - pr
+    - replaced_by
+    type: object
+  Team:
+    description: Команда с участниками.
+    properties:
+      members:
+        description: Участники команды.
+        items:
+          $ref: '#/definitions/TeamMember'
+        type: array
+      team_name:
+        description: Имя команды.
+        example: backend
+        type: string
+    required:
+    - members
+    - team_name
+    type: object
+  TeamMember:
+    description: Участник команды.
+    properties:
+      is_active:
+        description: Признак активности.
+        example: true
+        type: boolean
+      user_id:
+        description: user_id участника.
+        example: u1
+        type: string
+      username:
+        description: username участника.
+        example: Alice
+        type: string
+    required:
+    - is_active
+    - user_id
+    - username
+    type: object
+  TeamResponse:
+    description: Ответ, содержащий объект team.
+    properties:
+      team:
+        allOf:
+        - $ref: '#/definitions/Team'
+        description: Объект команды.
+    required:
+    - team
+    type: object
+  User:
+    description: Представление пользователя.
+    properties:
+      is_active:
+        description: Флаг активности.
+        example: true
+        type: boolean
+      team_name:
+        description: Название команды.
+        example: backend
+        type: string
+      user_id:
+        description: Идентификатор пользователя.
+        example: u2
+        type: string
+      username:
+        description: Имя пользователя.
+        example: Bob
+        type: string
+    required:
+    - is_active
+    - team_name
+    - user_id
+    - username
+    type: object
+  UserRequest:
+    description: Запрос на смену активности пользователя.
+    properties:
+      is_active:
+        description: Значение флага активности.
+        example: false
+        type: boolean
+      user_id:
+        description: Идентификатор пользователя.
+        example: u2
+        type: string
+    required:
+    - is_active
+    - user_id
+    type: object
+  UserResponse:
+    description: Ответ с пользователем.
+    properties:
+      user:
+        allOf:
+        - $ref: '#/definitions/User'
+        description: Пользователь.
+    required:
+    - user
+    type: object
+  UserReviewResponse:
+    description: PR, где пользователь ревьювер.
+    properties:
+      pull_requests:
+        description: Список PR.
+        items:
+          $ref: '#/definitions/PullRequestShort'
+        type: array
+      user_id:
+        description: Идентификатор пользователя.
+        example: u2
+        type: string
+    required:
+    - pull_requests
+    - user_id
+    type: object
 info:
   contact: {}
   description: Service for assigning reviewers to pull requests.
   title: PR Reviewer Service API
   version: "1.0"
-paths: {}
+paths:
+  /api/pullRequest/create:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт PR и автоматически назначает доступных ревьюверов.
+      parameters:
+      - description: Данные PR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreatePRRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/CreatePRResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Создать PR
+      tags:
+      - PullRequests
+  /api/pullRequest/merge:
+    post:
+      consumes:
+      - application/json
+      description: Переводит PR в состояние MERGED (идемпотентно).
+      parameters:
+      - description: Идентификатор PR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/MergePRRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MergePRResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Merge PR
+      tags:
+      - PullRequests
+  /api/pullRequest/reassign:
+    post:
+      consumes:
+      - application/json
+      description: Заменяет ревьювера на другого активного участника его команды.
+      parameters:
+      - description: Параметры переназначения
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ReassgnRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ReassignResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Переназначить ревьювера
+      tags:
+      - PullRequests
+  /api/team/add:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт команду и пользователей, если их ещё нет.
+      parameters:
+      - description: Данные команды
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateTeamRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TeamResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Создать команду
+      tags:
+      - Teams
+  /api/team/get:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает команду и участников по имени.
+      parameters:
+      - description: Имя команды
+        in: query
+        name: team_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Team'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Получить команду
+      tags:
+      - Teams
+  /api/users/getReview:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает PR, где пользователь выступает ревьювером.
+      parameters:
+      - description: Идентификатор пользователя
+        in: query
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UserReviewResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Получить PR пользователя
+      tags:
+      - Users
+  /api/users/setIsActive:
+    post:
+      consumes:
+      - application/json
+      description: Ставит или снимает флаг активности пользователя.
+      parameters:
+      - description: Параметры активности
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/UserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Обновить активность пользователя
+      tags:
+      - Users
 swagger: "2.0"

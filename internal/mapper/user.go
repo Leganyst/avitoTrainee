@@ -6,8 +6,8 @@ import (
 )
 
 // MapUserToDTO превращает модель User в DTO для ответов.
-func MapUserToDTO(user model.User) dto.UserDTO {
-	return dto.UserDTO{
+func MapUserToDTO(user model.User) dto.User {
+	return dto.User{
 		UserID:   user.UserID,
 		Username: user.Username,
 		TeamName: user.Team.Name,
@@ -16,8 +16,8 @@ func MapUserToDTO(user model.User) dto.UserDTO {
 }
 
 // MapUsersToDTO превращает список User в DTO без лишней логики.
-func MapUsersToDTO(users []model.User) []dto.UserDTO {
-	dtos := make([]dto.UserDTO, 0, len(users))
+func MapUsersToDTO(users []model.User) []dto.User {
+	dtos := make([]dto.User, 0, len(users))
 	for _, user := range users {
 		dtos = append(dtos, MapUserToDTO(user))
 	}
@@ -25,7 +25,7 @@ func MapUsersToDTO(users []model.User) []dto.UserDTO {
 }
 
 // MapTeamMemberDTOToUser собирает модель User из DTO участника команды.
-func MapTeamMemberDTOToUser(member dto.TeamMemberDTO) model.User {
+func MapTeamMemberDTOToUser(member dto.TeamMember) model.User {
 	return model.User{
 		UserID:   member.UserID,
 		Username: member.Username,
@@ -34,7 +34,7 @@ func MapTeamMemberDTOToUser(member dto.TeamMemberDTO) model.User {
 }
 
 // MapTeamMemberDTOsToUsers собирает модели User из списка DTO участников.
-func MapTeamMemberDTOsToUsers(members []dto.TeamMemberDTO) []model.User {
+func MapTeamMemberDTOsToUsers(members []dto.TeamMember) []model.User {
 	users := make([]model.User, len(members))
 	for i := range members {
 		users[i] = MapTeamMemberDTOToUser(members[i])

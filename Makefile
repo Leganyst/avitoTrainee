@@ -2,8 +2,9 @@ APP_NAME := avito-trainee
 BIN_DIR  := bin
 BIN      := $(BIN_DIR)/$(APP_NAME)
 CMD      := ./cmd/main.go
+SWAG     ?= swag
 
-.PHONY: build run test clean docker-build docker-up docker-up-detached docker-down docker-logs
+.PHONY: build run test clean docs docker-build docker-up docker-up-detached docker-down docker-logs
 
 build: $(BIN)
 
@@ -19,6 +20,9 @@ test:
 
 clean:
 	rm -rf $(BIN_DIR)
+
+docs:
+	$(SWAG) init -g cmd/main.go -o docs
 
 docker-build:
 	docker build -t $(APP_NAME):local .
