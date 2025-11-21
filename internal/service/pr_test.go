@@ -85,7 +85,7 @@ func TestPRService_CreatePR_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreatePR returned error: %v", err)
 	}
-	if pr.Status != statusOpen || pr.AuthorID != "author" {
+	if pr.Status != statusOpen || pr.Author.UserID != "author" {
 		t.Fatalf("unexpected PR fields: %+v", pr)
 	}
 	if len(pr.AssignedReviewers) != 2 {

@@ -24,6 +24,11 @@ clean:
 docs:
 	$(SWAG) init -g cmd/main.go -o docs
 
+test-integration:
+	docker compose -f test/docker-compose.integration.yml up -d db
+	go test ./test
+	docker compose -f test/docker-compose.integration.yml down
+
 docker-build:
 	docker build -t $(APP_NAME):local .
 

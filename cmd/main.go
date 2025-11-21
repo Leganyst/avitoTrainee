@@ -30,6 +30,10 @@ func main() {
 		log.Fatal("cannot connect to database: ", err)
 	}
 
+	if err := db.Migrate(conn); err != nil {
+		log.Fatal("auto-migrate failed: ", err)
+	}
+
 	teamRepo := repository.NewTeamRepository(conn)
 	userRepo := repository.NewUserRepository(conn)
 	prRepo := repository.NewRPRepository(conn)

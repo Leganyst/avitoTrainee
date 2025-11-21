@@ -10,9 +10,8 @@ import (
 // MapCreatePRRequestToModel превращает запрос создания PR в модель.
 func MapCreatePRRequestToModel(req dto.CreatePRRequest) model.PullRequest {
 	return model.PullRequest{
-		PRID:     req.PRID,
-		Name:     req.Name,
-		AuthorID: req.Author,
+		PRID: req.PRID,
+		Name: req.Name,
 	}
 }
 
@@ -21,7 +20,7 @@ func MapPullRequestToDTO(pr model.PullRequest) dto.PullRequest {
 	return dto.PullRequest{
 		PRID:              pr.PRID,
 		Name:              pr.Name,
-		AuthorID:          pr.AuthorID,
+		AuthorID:          authorExternalID(pr),
 		Status:            pr.Status,
 		AssignedReviewers: mapAssignedReviewers(pr.AssignedReviewers),
 		CreatedAT:         stringPtrFromTime(pr.CreatedAt),
@@ -34,7 +33,7 @@ func MapPullRequestShortToDTO(pr model.PullRequest) dto.PullRequestShort {
 	return dto.PullRequestShort{
 		PRID:     pr.PRID,
 		Name:     pr.Name,
-		AuthorID: pr.AuthorID,
+		AuthorID: authorExternalID(pr),
 		Status:   pr.Status,
 	}
 }
@@ -63,6 +62,14 @@ func mapAssignedReviewers(reviewers []model.User) []string {
 		ids = append(ids, reviewer.UserID)
 	}
 	return ids
+}
+
+// help func - возвращает строкове external значение идентификатора, если автор предзагружен ОРМ
+func authorExternalID(pr model.PullRequest) string {
+	if pr.Author.UserID != "" {
+		return pr.Author.UserID
+	}
+	return ""
 }
 
 // stringPtrFromTime нужен, чтобы привести время к RFC3339 и вернуть указатель.

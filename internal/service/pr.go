@@ -68,7 +68,8 @@ func (s *prService) CreatePR(prID, name, authorID string) (*model.PullRequest, e
 		PRID:     prID,
 		Name:     name,
 		Status:   statusOpen,
-		AuthorID: authorID,
+		AuthorID: author.ID,
+		Author:   *author,
 	}
 
 	if err := s.repo.CreatePR(pr); err != nil {
@@ -143,13 +144,9 @@ func (s *prService) Reassign(prID string, oldReviewerID string) (*model.PullRequ
 	}
 
 	// Создаем map во избежание назначения ревьюером того же человека
-	excluded := make(map[uint]struct{}, len(pr.AssignedReviewers)+1)
+	excluded := make(map[uint]struct{}, len(pr.AssignedReviewers)+2)
 	excluded[oldReviewer.ID] = struct{}{}
-	for _, reviewer := range pr.AssignedReviewers {
-		if reviewer.ID != oldReviewer.ID {
-			excluded[reviewer.ID] = struct{}{}
-		}
-	}
+	excluded[pr.AuthorID] = struct{}{}
 
 	candidates, err := s.selectReviewers(oldReviewer.TeamID, excluded, 1)
 	if err != nil {
@@ -160,7 +157,7 @@ func (s *prService) Reassign(prID string, oldReviewerID string) (*model.PullRequ
 	}
 	newReviewer := candidates[0]
 
-	if err := s.repo.ReplaceReviewer(pr, oldReviewer.ID, newReviewer.ID); err != nil {
+	if err := s.repo.ReplaceReviewer(pr, oldReviewer.ID, newReviewer); err != nil {
 		return nil, "", err
 	}
 

@@ -19,7 +19,7 @@ func (s *stubUserPRRepo) CreatePR(pr *model.PullRequest) error { return nil }
 func (s *stubUserPRRepo) AddReviewers(pr *model.PullRequest, reviewers []model.User) error {
 	return nil
 }
-func (s *stubUserPRRepo) ReplaceReviewer(pr *model.PullRequest, oldReviewerID, newReviewerID uint) error {
+func (s *stubUserPRRepo) ReplaceReviewer(pr *model.PullRequest, oldReviewerID uint, newReviewer model.User) error {
 	return nil
 }
 func (s *stubUserPRRepo) GetPRByExternalID(prID string) (*model.PullRequest, error) { return nil, nil }

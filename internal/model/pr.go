@@ -8,9 +8,9 @@ type PullRequest struct {
 
 	Name     string `gorm:"not null"`
 	Status   string `gorm:"not null"`
-	AuthorID string `gorm:"not null"`
+	AuthorID uint   `gorm:"not null"`
 
-	Author User
+	Author User `gorm:"constraint:OnDelete:CASCADE"`
 
 	/*
 		JOIN Table

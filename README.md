@@ -113,11 +113,11 @@
 ### 5. Обработка ошибок
 
 - [x] Ввести отдельные наборы ошибок для сервисного и репозиторного слоёв (пакеты `errs`).
-- [ ] Добавить доменный тип ошибки с полем `code`, совпадающим с enum из `ErrorResponse` (`TEAM_EXISTS`, `PR_EXISTS`, `PR_MERGED`, `NOT_ASSIGNED`, `NO_CANDIDATE`).
-- [ ] В сервисном слое маппить:
+- [x] Добавить доменный тип ошибки с полем `code`, совпадающим с enum из `ErrorResponse` (`TEAM_EXISTS`, `PR_EXISTS`, `PR_MERGED`, `NOT_ASSIGNED`, `NO_CANDIDATE`).
+- [x] В сервисном слое маппить:
   - технические ошибки репозитория (`ErrNotFound`, `ErrDuplicate`) → доменные;
   - доменные ошибки → коды из `ErrorResponse`.
-- [ ] В HTTP-слое (хэндлеры):
+- [x] В HTTP-слое (хэндлеры):
   - по доменному `code` выбирать HTTP-статус (400/404/409);
   - возвращать JSON в формате `ErrorResponse` из `openapi.yml`.
 

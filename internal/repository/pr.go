@@ -15,7 +15,7 @@ type (
 		UpdatePR(pr *model.PullRequest) error
 
 		AddReviewers(pr *model.PullRequest, reviewers []model.User) error
-		ReplaceReviewer(pr *model.PullRequest, oldReviewerID, newReviewerID uint) error
+		ReplaceReviewer(pr *model.PullRequest, oldReviewerID uint, newReviewer model.User) error
 
 		GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error)
 	}
@@ -30,8 +30,9 @@ func NewRPRepository(db *gorm.DB) *GormPRRepository {
 }
 
 func (r *GormPRRepository) CreatePR(pr *model.PullRequest) error {
-	if err := r.db.Create(pr).Error; err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
+	err := r.db.Create(pr).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) { // Для уникальных/дубликатов ключей
 			return repoerrs.ErrDuplicate
 		}
 		return err
@@ -42,6 +43,7 @@ func (r *GormPRRepository) CreatePR(pr *model.PullRequest) error {
 func (r *GormPRRepository) GetPRByExternalID(prID string) (*model.PullRequest, error) {
 	var pr model.PullRequest
 	if err := r.db.
+		Preload("Author").
 		Preload("AssignedReviewers").
 		Where("pr_id = ?", prID).
 		First(&pr).Error; err != nil {
@@ -75,7 +77,7 @@ func (r *GormPRRepository) AddReviewers(pr *model.PullRequest, reviewers []model
 	return r.db.Model(pr).Association("AssignedReviewers").Append(reviewersInterface...)
 }
 
-func (r *GormPRRepository) ReplaceReviewer(pr *model.PullRequest, oldReviewerID, newReviewerID uint) error {
+func (r *GormPRRepository) ReplaceReviewer(pr *model.PullRequest, oldReviewerID uint, newReviewer model.User) error {
 	if err := r.db.
 		Model(pr).
 		Association("AssignedReviewers").
@@ -83,8 +85,7 @@ func (r *GormPRRepository) ReplaceReviewer(pr *model.PullRequest, oldReviewerID,
 		return err
 	}
 
-	return r.db.Model(pr).Association("AssignedReviewers").
-		Append(&model.User{ID: newReviewerID})
+	return r.db.Model(pr).Association("AssignedReviewers").Append(&newReviewer)
 }
 
 func (r *GormPRRepository) GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error) {
@@ -93,6 +94,7 @@ func (r *GormPRRepository) GetPRsWhereReviewer(userID uint) ([]model.PullRequest
 		Model(&model.PullRequest{}).
 		Joins("JOIN pr_reviewers ON pr_reviewers.pull_request_id = pull_requests.id").
 		Where("pr_reviewers.user_id = ?", userID).
+		Preload("Author").
 		Preload("AssignedReviewers").
 		Find(&prs).Error
 

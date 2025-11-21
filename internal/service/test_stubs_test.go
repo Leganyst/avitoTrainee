@@ -106,13 +106,13 @@ func (s *stubPRRepo) AddReviewers(pr *model.PullRequest, reviewers []model.User)
 	s.addedReviewers = append([]model.User(nil), reviewers...)
 	return nil
 }
-func (s *stubPRRepo) ReplaceReviewer(pr *model.PullRequest, oldReviewerID, newReviewerID uint) error {
+func (s *stubPRRepo) ReplaceReviewer(pr *model.PullRequest, oldReviewerID uint, newReviewer model.User) error {
 	if s.replaceErr != nil {
 		return s.replaceErr
 	}
 	s.replacedCalled = true
 	s.replaceOldID = oldReviewerID
-	s.replaceNewID = newReviewerID
+	s.replaceNewID = newReviewer.ID
 	return nil
 }
 func (s *stubPRRepo) GetPRByExternalID(prID string) (*model.PullRequest, error) {
