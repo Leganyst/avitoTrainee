@@ -24,9 +24,15 @@ clean:
 docs:
 	$(SWAG) init -g cmd/main.go -o docs
 
+unit-test:
+	go test ./internal/service -coverprofile=cover.out
+	go tool cover -html=cover.out
+
 test-integration:
-	docker compose -f test/docker-compose.integration.yml up -d db
-	go test ./test
+	docker compose -f test/docker-compose.integration.yml down
+	docker compose -f test/docker-compose.integration.yml up -d 
+	go test ./test -coverpkg=./internal/service/...,./internal/repository/... -coverprofile=integration-cover.out
+	go tool cover -html=integration-cover.out
 	docker compose -f test/docker-compose.integration.yml down
 
 docker-build:
@@ -44,6 +50,3 @@ docker-down:
 docker-logs:
 	docker compose logs -f app
 
-test:
-	go test ./internal/service -coverprofile=cover.out
-	go tool cover -html=cover.out
