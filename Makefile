@@ -38,3 +38,7 @@ docker-down:
 
 docker-logs:
 	docker compose logs -f app
+
+test:
+	go test ./internal/service -coverprofile=cover.out
+	go tool cover -html=cover.out

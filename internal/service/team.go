@@ -43,14 +43,6 @@ func NewTeamService(
 	}
 }
 
-/*
-TODO:
-
-		CreateTeam также не проверяет уникальность user_id внутри запроса и не различает создание/обновление
-	 	пользователей в соответствии с описанием команды (в спецификации команда должна быть именно уникальной
-	 	сущностью, а пользователи — обновляться). Нужны дополнительные валидации и, при успешном создании,
-	 	корректная структура ответа с DTO.
-*/
 func (s *teamService) CreateTeam(teamName string, members []model.User) (*model.Team, error) {
 	exists, err := s.teamRepo.TeamExists(teamName)
 	if err != nil {
