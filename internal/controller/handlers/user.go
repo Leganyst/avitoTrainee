@@ -40,14 +40,17 @@ func registerUserRoutes(r gin.IRouter, userSvc service.UserService) {
 // @Failure      500      {object}  dto.ErrorResponse
 // @Router       /api/users/setIsActive [post]
 func (h *UserHandler) SetActive(c *gin.Context) {
+	log := logger(c)
 	var req dto.UserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Warnw("invalid SetActive payload", "error", err)
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "invalid request payload")
 		return
 	}
 
-	user, err := h.userSvc.SetActive(req.UserID, req.IsActive)
+	user, err := h.userSvc.SetActive(req.UserID, *req.IsActive)
 	if err != nil {
+		log.Errorw("failed to update user activity", "user_id", req.UserID, "is_active", req.IsActive, "error", err)
 		h.handleDomainError(c, err)
 		return
 	}
@@ -55,6 +58,7 @@ func (h *UserHandler) SetActive(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.UserResponse{
 		User: mapper.MapUserToDTO(*user),
 	})
+	log.Infow("user activity updated", "user_id", req.UserID, "is_active", req.IsActive)
 }
 
 // GetUserReviews godoc
@@ -70,20 +74,24 @@ func (h *UserHandler) SetActive(c *gin.Context) {
 // @Failure      500      {object}  dto.ErrorResponse
 // @Router       /api/users/getReview [get]
 func (h *UserHandler) GetUserReviews(c *gin.Context) {
+	log := logger(c)
 	userID := c.Query("user_id")
 	if userID == "" {
+		log.Warnw("user_id query parameter missing")
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "user_id is required")
 		return
 	}
 
 	prs, err := h.userSvc.GetUserReviews(userID)
 	if err != nil {
+		log.Errorw("failed to get user reviews", "user_id", userID, "error", err)
 		h.handleDomainError(c, err)
 		return
 	}
 
 	resp := mapper.BuildUserReviewResponse(userID, prs)
 	c.JSON(http.StatusOK, resp)
+	log.Infow("user reviews fetched", "user_id", userID, "pr_count", len(prs))
 }
 
 func (h *UserHandler) handleDomainError(c *gin.Context, err error) {

@@ -25,14 +25,14 @@ type (
 	}
 )
 
-func NewRPRepository(db *gorm.DB) *GormPRRepository {
+func NewPRRepository(db *gorm.DB) *GormPRRepository {
 	return &GormPRRepository{db}
 }
 
 func (r *GormPRRepository) CreatePR(pr *model.PullRequest) error {
 	err := r.db.Create(pr).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) { // Для уникальных/дубликатов ключей
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return repoerrs.ErrDuplicate
 		}
 		return err

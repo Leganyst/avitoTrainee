@@ -42,7 +42,9 @@ func (r *GormUserRepository) CreateOrUpdate(user *model.User) error {
 
 func (r *GormUserRepository) SetActive(userID string, active bool) (*model.User, error) {
 	var user model.User
-	if err := r.db.Where("user_id = ?", userID).First(&user).Error; err != nil {
+	if err := r.db.Where("user_id = ?", userID).
+		Preload("Team").
+		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, repoerrs.ErrNotFound
 		}
@@ -77,6 +79,7 @@ func (r *GormUserRepository) GetByUserID(userID string) (*model.User, error) {
 	var user model.User
 	if err := r.db.
 		Where("user_id = ?", userID).
+		Preload("Team").
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, repoerrs.ErrNotFound

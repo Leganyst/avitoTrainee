@@ -148,6 +148,10 @@ func (s *prService) Reassign(prID string, oldReviewerID string) (*model.PullRequ
 	excluded[oldReviewer.ID] = struct{}{}
 	excluded[pr.AuthorID] = struct{}{}
 
+	for _, r := range pr.AssignedReviewers {
+		excluded[r.ID] = struct{}{}
+	}
+
 	candidates, err := s.selectReviewers(oldReviewer.TeamID, excluded, 1)
 	if err != nil {
 		return nil, "", err

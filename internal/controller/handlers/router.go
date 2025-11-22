@@ -13,6 +13,8 @@ func RegisterRoutes(r *gin.Engine,
 	userSvc service.UserService,
 	prSvc service.PRService,
 ) {
+	r.Use(requestLoggerMiddleware())
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "OK"})
 	})

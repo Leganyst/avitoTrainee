@@ -15,9 +15,6 @@ $(BIN):
 run: build
 	if [ -f .env ]; then export $$(grep -v '^#' .env | xargs); fi; $(BIN)
 
-test:
-	go test ./...
-
 clean:
 	rm -rf $(BIN_DIR)
 
@@ -49,4 +46,3 @@ docker-down:
 
 docker-logs:
 	docker compose logs -f app
-

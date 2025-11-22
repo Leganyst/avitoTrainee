@@ -15,7 +15,7 @@ func TestPRFlow_Create_Reassign_Merge(t *testing.T) {
 	prepareDB(t, db)
 
 	userRepo := repository.NewUserRepository(db)
-	prRepo := repository.NewRPRepository(db)
+	prRepo := repository.NewPRRepository(db)
 
 	teamSvc := service.NewTeamService(repository.NewTeamRepository(db), userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
@@ -94,7 +94,7 @@ func TestPRFlow_Create_NoAuthor(t *testing.T) {
 	prepareDB(t, db)
 
 	userRepo := repository.NewUserRepository(db)
-	prRepo := repository.NewRPRepository(db)
+	prRepo := repository.NewPRRepository(db)
 
 	prSvc := service.NewPrService(prRepo, userRepo)
 
@@ -108,7 +108,7 @@ func TestPRFlow_Create_Duplicate(t *testing.T) {
 	prepareDB(t, db)
 
 	userRepo := repository.NewUserRepository(db)
-	prRepo := repository.NewRPRepository(db)
+	prRepo := repository.NewPRRepository(db)
 
 	teamSvc := service.NewTeamService(repository.NewTeamRepository(db), userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
@@ -129,7 +129,7 @@ func TestPRFlow_Reassign_NoCandidates(t *testing.T) {
 
 	teamRepo := repository.NewTeamRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	prRepo := repository.NewRPRepository(db)
+	prRepo := repository.NewPRRepository(db)
 
 	teamSvc := service.NewTeamService(teamRepo, userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
@@ -154,7 +154,7 @@ func TestPRFlow_Reassign_ReviewerMissing(t *testing.T) {
 
 	teamRepo := repository.NewTeamRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	prRepo := repository.NewRPRepository(db)
+	prRepo := repository.NewPRRepository(db)
 
 	teamSvc := service.NewTeamService(teamRepo, userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
@@ -179,7 +179,7 @@ func TestPR_Reassign_To_Merged_PR(t *testing.T) {
 
 	teamRepo := repository.NewTeamRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	prRepo := repository.NewRPRepository(db)
+	prRepo := repository.NewPRRepository(db)
 
 	teamSvc := service.NewTeamService(teamRepo, userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)

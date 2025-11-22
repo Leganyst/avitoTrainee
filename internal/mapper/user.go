@@ -46,6 +46,6 @@ func MapTeamMemberDTOsToUsers(members []dto.TeamMember) []model.User {
 func MapUserRequestToUser(req dto.UserRequest) model.User {
 	return model.User{
 		UserID:   req.UserID,
-		IsActive: req.IsActive,
+		IsActive: *req.IsActive,
 	}
 }

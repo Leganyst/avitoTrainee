@@ -14,6 +14,13 @@ const (
 )
 
 func writeError(c *gin.Context, status int, code, message string) {
+	log := logger(c)
+	switch {
+	case status >= 500:
+		log.Errorw("handler error response", "status", status, "code", code, "message", message)
+	default:
+		log.Warnw("handler error response", "status", status, "code", code, "message", message)
+	}
 	c.JSON(status, gin.H{
 		"error": gin.H{
 			"code":    code,

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	docs "github.com/Leganyst/avitoTrainee/docs"
@@ -21,22 +20,26 @@ import (
 // @BasePath        /
 func main() {
 	cfg := config.Load()
-	log.Println("config loaded")
+	if err := config.InitLogger(cfg.LogLevel); err != nil {
+		panic("failed to initialize logger: " + err.Error())
+	}
+	defer config.Logger().Sync()
+	config.Logger().Infow("config loaded", "port", cfg.Port, "logLevel", cfg.LogLevel)
 
 	docs.SwaggerInfo.BasePath = "/"
 
 	conn, err := db.Connect(cfg)
 	if err != nil {
-		log.Fatal("cannot connect to database: ", err)
+		config.Logger().Fatalw("cannot connect to database", "error", err)
 	}
 
 	if err := db.Migrate(conn); err != nil {
-		log.Fatal("auto-migrate failed: ", err)
+		config.Logger().Fatalw("auto-migrate failed", "error", err)
 	}
 
 	teamRepo := repository.NewTeamRepository(conn)
 	userRepo := repository.NewUserRepository(conn)
-	prRepo := repository.NewRPRepository(conn)
+	prRepo := repository.NewPRRepository(conn)
 
 	teamSvc := service.NewTeamService(teamRepo, userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
@@ -53,8 +56,8 @@ func main() {
 		Handler: r,
 	}
 
-	log.Println("server running on :8080")
+	config.Logger().Info("server running on :8080")
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal("server stopped: ", err)
+		config.Logger().Fatalw("server stopped", "error", err)
 	}
 }
