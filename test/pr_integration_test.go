@@ -24,6 +24,7 @@ func TestPRFlow_Create_Reassign_Merge(t *testing.T) {
 		{UserID: "u1", Username: "Alice", IsActive: true},
 		{UserID: "u2", Username: "Bob", IsActive: true},
 		{UserID: "u3", Username: "Charlie", IsActive: true},
+		{UserID: "u4", Username: "Oleg", IsActive: true},
 	}
 
 	if _, err := teamSvc.CreateTeam("backend", members); err != nil {
@@ -49,7 +50,7 @@ func TestPRFlow_Create_Reassign_Merge(t *testing.T) {
 		}
 	}
 
-	// act: reassign одного ревьювера (есть свободный кандидат u3/u2)
+	// act: reassign одного ревьювера (кандидат - u4)
 	old := pr.AssignedReviewers[0].UserID
 	updated, replacedBy, err := prSvc.Reassign(pr.PRID, old)
 	if err != nil {
