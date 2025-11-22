@@ -19,7 +19,10 @@ type Config struct {
 	LogLevel string
 }
 
-var appLogger *zap.SugaredLogger
+var (
+	appLogger *zap.SugaredLogger
+	nopLogger = zap.NewNop().Sugar()
+)
 
 func Load() *Config {
 	return &Config{
@@ -42,12 +45,31 @@ func getEnv(key, def string) string {
 
 func InitLogger(level string) error {
 	var cfg zap.Config
-	switch strings.ToLower(level) {
+	lvl := strings.ToLower(level)
+	switch lvl {
 	case "debug":
 		cfg = zap.NewDevelopmentConfig()
 	default:
 		cfg = zap.NewProductionConfig()
 	}
+
+	/*
+		debug → dev‑конфиг, уровень Debug.
+		info (или пусто) → zap.InfoLevel.
+		warn → zap.WarnLevel.
+		error → zap.ErrorLevel.
+	*/
+	switch lvl {
+	case "debug":
+		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	case "info", "":
+		cfg.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
+	case "warn":
+		cfg.Level = zap.NewAtomicLevelAt(zap.WarnLevel)
+	case "error":
+		cfg.Level = zap.NewAtomicLevelAt(zap.ErrorLevel)
+	}
+
 	cfg.Encoding = "console"
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	if strings.ToLower(level) == "debug" {
@@ -64,5 +86,8 @@ func InitLogger(level string) error {
 }
 
 func Logger() *zap.SugaredLogger {
+	if appLogger == nil {
+		return nopLogger
+	}
 	return appLogger
 }

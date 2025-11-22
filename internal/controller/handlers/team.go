@@ -51,6 +51,7 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "team_name is required")
 		return
 	}
+	log.Debugw("create team payload", "request", req)
 
 	members := mapper.MapTeamMemberDTOsToUsers(req.Members)
 	team, err := h.teamSvc.CreateTeam(req.TeamName, members)
@@ -97,6 +98,7 @@ func (h *TeamHandler) GetTeam(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "team_name is required")
 		return
 	}
+	log.Debugw("get team request", "team_name", teamName)
 
 	team, err := h.teamSvc.GetTeam(teamName)
 	if err != nil {

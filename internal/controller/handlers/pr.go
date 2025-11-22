@@ -55,6 +55,7 @@ func (h *PRHandler) CreatePR(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "pull_request_id, pull_request_name and author_id are required")
 		return
 	}
+	log.Debugw("create PR request", "payload", req)
 
 	pr, err := h.prSvc.CreatePR(req.PRID, req.Name, req.Author)
 	if err != nil {
@@ -94,6 +95,7 @@ func (h *PRHandler) MergePR(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "pull_request_id is required")
 		return
 	}
+	log.Debugw("merge PR request", "payload", req)
 
 	pr, err := h.prSvc.Merge(req.PRID)
 	if err != nil {
@@ -134,6 +136,7 @@ func (h *PRHandler) ReassignReviewer(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "pull_request_id and old_user_id are required")
 		return
 	}
+	log.Debugw("reassign request", "payload", req)
 
 	pr, replacedBy, err := h.prSvc.Reassign(req.PRID, req.OldUserID)
 	if err != nil {

@@ -47,6 +47,7 @@ func (h *UserHandler) SetActive(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "invalid request payload")
 		return
 	}
+	log.Debugw("set active request", "payload", req)
 
 	user, err := h.userSvc.SetActive(req.UserID, *req.IsActive)
 	if err != nil {
@@ -81,6 +82,7 @@ func (h *UserHandler) GetUserReviews(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "user_id is required")
 		return
 	}
+	log.Debugw("get user reviews request", "user_id", userID)
 
 	prs, err := h.userSvc.GetUserReviews(userID)
 	if err != nil {

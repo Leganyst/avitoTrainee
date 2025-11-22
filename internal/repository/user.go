@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 
+	"github.com/Leganyst/avitoTrainee/internal/config"
 	"github.com/Leganyst/avitoTrainee/internal/model"
 	repoerrs "github.com/Leganyst/avitoTrainee/internal/repository/errs"
 	"gorm.io/gorm"
@@ -33,10 +34,13 @@ func (r *GormUserRepository) CreateOrUpdate(user *model.User) error {
 		Assign(user).
 		FirstOrCreate(user).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			config.Logger().Warnw("db user duplicate", "user_id", user.UserID)
 			return repoerrs.ErrDuplicate
 		}
+		config.Logger().Errorw("db create/update user failed", "user_id", user.UserID, "error", err)
 		return err
 	}
+	config.Logger().Debugw("db user upserted", "user_id", user.UserID, "team_id", user.TeamID)
 	return nil
 }
 
@@ -46,16 +50,19 @@ func (r *GormUserRepository) SetActive(userID string, active bool) (*model.User,
 		Preload("Team").
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			config.Logger().Warnw("db user not found for set active", "user_id", userID)
 			return nil, repoerrs.ErrNotFound
 		}
+		config.Logger().Errorw("db get user for set active failed", "user_id", userID, "error", err)
 		return nil, err
 	}
 
 	user.IsActive = active
 	if err := r.db.Save(&user).Error; err != nil {
+		config.Logger().Errorw("db save user active failed", "user_id", userID, "error", err)
 		return nil, err
 	}
-
+	config.Logger().Debugw("db user active updated", "user_id", userID, "is_active", active)
 	return &user, nil
 }
 
@@ -64,6 +71,11 @@ func (r *GormUserRepository) GetUsersByTeam(teamID uint) ([]model.User, error) {
 	err := r.db.
 		Where("team_id = ?", teamID).
 		Find(&users).Error
+	if err != nil {
+		config.Logger().Errorw("db get users by team failed", "team_id", teamID, "error", err)
+		return nil, err
+	}
+	config.Logger().Debugw("db users by team loaded", "team_id", teamID, "count", len(users))
 	return users, err
 }
 
@@ -72,6 +84,11 @@ func (r *GormUserRepository) GetActiveUsersByTeam(teamID uint) ([]model.User, er
 	err := r.db.
 		Where("team_id = ? AND is_active = true", teamID).
 		Find(&users).Error
+	if err != nil {
+		config.Logger().Errorw("db get active users failed", "team_id", teamID, "error", err)
+		return nil, err
+	}
+	config.Logger().Debugw("db active users loaded", "team_id", teamID, "count", len(users))
 	return users, err
 }
 
@@ -82,9 +99,12 @@ func (r *GormUserRepository) GetByUserID(userID string) (*model.User, error) {
 		Preload("Team").
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			config.Logger().Warnw("db user not found", "user_id", userID)
 			return nil, repoerrs.ErrNotFound
 		}
+		config.Logger().Errorw("db get user failed", "user_id", userID, "error", err)
 		return nil, err
 	}
+	config.Logger().Debugw("db user loaded", "user_id", userID, "team_id", user.TeamID)
 	return &user, nil
 }

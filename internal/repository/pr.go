@@ -2,7 +2,9 @@ package repository
 
 import (
 	"errors"
+	"strings"
 
+	"github.com/Leganyst/avitoTrainee/internal/config"
 	"github.com/Leganyst/avitoTrainee/internal/model"
 	repoerrs "github.com/Leganyst/avitoTrainee/internal/repository/errs"
 	"gorm.io/gorm"
@@ -30,13 +32,15 @@ func NewPRRepository(db *gorm.DB) *GormPRRepository {
 }
 
 func (r *GormPRRepository) CreatePR(pr *model.PullRequest) error {
-	err := r.db.Create(pr).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
+	if err := r.db.Create(pr).Error; err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) || isUniqueViolation(err) {
+			config.Logger().Warnw("db PR duplicate", "pr_id", pr.PRID)
 			return repoerrs.ErrDuplicate
 		}
+		config.Logger().Errorw("db create PR failed", "pr_id", pr.PRID, "error", err)
 		return err
 	}
+	config.Logger().Debugw("db PR created", "pr_id", pr.PRID, "author_id", pr.AuthorID)
 	return nil
 }
 
@@ -48,21 +52,27 @@ func (r *GormPRRepository) GetPRByExternalID(prID string) (*model.PullRequest, e
 		Where("pr_id = ?", prID).
 		First(&pr).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			config.Logger().Warnw("db PR not found", "pr_id", prID)
 			return nil, repoerrs.ErrNotFound
 		}
+		config.Logger().Errorw("db get PR failed", "pr_id", prID, "error", err)
 		return nil, err
 	}
+	config.Logger().Debugw("db PR loaded", "pr_id", prID, "reviewers", len(pr.AssignedReviewers))
 	return &pr, nil
 }
 
 func (r *GormPRRepository) UpdatePR(pr *model.PullRequest) error {
 	res := r.db.Save(pr)
 	if res.Error != nil {
+		config.Logger().Errorw("db update PR failed", "pr_id", pr.PRID, "error", res.Error)
 		return res.Error
 	}
 	if res.RowsAffected == 0 {
+		config.Logger().Warnw("db update PR no rows", "pr_id", pr.PRID)
 		return repoerrs.ErrNotFound
 	}
+	config.Logger().Debugw("db PR updated", "pr_id", pr.PRID)
 	return nil
 }
 
@@ -74,7 +84,12 @@ func (r *GormPRRepository) AddReviewers(pr *model.PullRequest, reviewers []model
 		reviewersInterface[i] = &reviewerCopy
 	}
 
-	return r.db.Model(pr).Association("AssignedReviewers").Append(reviewersInterface...)
+	if err := r.db.Model(pr).Association("AssignedReviewers").Append(reviewersInterface...); err != nil {
+		config.Logger().Errorw("db append reviewers failed", "pr_id", pr.PRID, "error", err)
+		return err
+	}
+	config.Logger().Debugw("db reviewers appended", "pr_id", pr.PRID, "count", len(reviewers))
+	return nil
 }
 
 func (r *GormPRRepository) ReplaceReviewer(pr *model.PullRequest, oldReviewerID uint, newReviewer model.User) error {
@@ -82,10 +97,16 @@ func (r *GormPRRepository) ReplaceReviewer(pr *model.PullRequest, oldReviewerID 
 		Model(pr).
 		Association("AssignedReviewers").
 		Delete(&model.User{ID: oldReviewerID}); err != nil {
+		config.Logger().Errorw("db delete reviewer failed", "pr_id", pr.PRID, "old_user", oldReviewerID, "error", err)
 		return err
 	}
 
-	return r.db.Model(pr).Association("AssignedReviewers").Append(&newReviewer)
+	if err := r.db.Model(pr).Association("AssignedReviewers").Append(&newReviewer); err != nil {
+		config.Logger().Errorw("db append new reviewer failed", "pr_id", pr.PRID, "new_user", newReviewer.UserID, "error", err)
+		return err
+	}
+	config.Logger().Debugw("db reviewer replaced", "pr_id", pr.PRID, "old_user", oldReviewerID, "new_user", newReviewer.UserID)
+	return nil
 }
 
 func (r *GormPRRepository) GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error) {
@@ -98,5 +119,14 @@ func (r *GormPRRepository) GetPRsWhereReviewer(userID uint) ([]model.PullRequest
 		Preload("AssignedReviewers").
 		Find(&prs).Error
 
+	if err != nil {
+		config.Logger().Errorw("db list PRs for reviewer failed", "user_id", userID, "error", err)
+		return nil, err
+	}
+	config.Logger().Debugw("db PRs for reviewer loaded", "user_id", userID, "count", len(prs))
 	return prs, err
+}
+
+func isUniqueViolation(err error) bool {
+	return strings.Contains(strings.ToLower(err.Error()), "duplicate key value")
 }
