@@ -1,5 +1,53 @@
 basePath: /
 definitions:
+  AssignmentByPR:
+    description: Количество назначений по PR.
+    properties:
+      pull_request_id:
+        description: Идентификатор PR.
+        example: pr-1001
+        type: string
+      pull_request_name:
+        description: Название PR.
+        example: Add search endpoint
+        type: string
+      reviewer_count:
+        description: Число назначенных ревьюверов для PR.
+        example: 2
+        type: integer
+    type: object
+  AssignmentByPRResponse:
+    description: Ответ со списком назначений по PR.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/AssignmentByPR'
+        type: array
+    type: object
+  AssignmentByUser:
+    description: Количество назначений по пользователям.
+    properties:
+      assignments:
+        description: Сколько раз этот пользователь назначался ревьювером.
+        example: 3
+        type: integer
+      user_id:
+        description: user_id ревьювера.
+        example: u1
+        type: string
+      username:
+        description: username ревьювера.
+        example: Alice
+        type: string
+    type: object
+  AssignmentByUserResponse:
+    description: Ответ со списком назначений по пользователям.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/AssignmentByUser'
+        type: array
+    type: object
   CreatePRRequest:
     description: Запрос на создание PR.
     properties:
@@ -416,6 +464,46 @@ paths:
       summary: Переназначить ревьювера
       tags:
       - PullRequests
+  /api/stats/assignments/by-pr:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список PR с количеством назначенных ревьюверов. Список
+        отсортирован по числу ревьюверов по убыванию.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AssignmentByPRResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Статистика назначений по PR
+      tags:
+      - Stats
+  /api/stats/assignments/by-user:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список пользователей с количеством назначений на ревью.
+        Пользователи сортируются по количеству назначений по убыванию.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/AssignmentByUserResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Статистика назначений по пользователям
+      tags:
+      - Stats
   /api/team/add:
     post:
       consumes:
@@ -546,4 +634,18 @@ paths:
       summary: Обновить активность пользователя
       tags:
       - Users
+  /healthcheck:
+    get:
+      description: Returns service health status.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health Check
+      tags:
+      - Health
 swagger: "2.0"

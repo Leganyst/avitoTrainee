@@ -40,14 +40,16 @@ func main() {
 	teamRepo := repository.NewTeamRepository(conn)
 	userRepo := repository.NewUserRepository(conn)
 	prRepo := repository.NewPRRepository(conn)
+	statsRepo := repository.NewStatsRepository(conn)
 
 	teamSvc := service.NewTeamService(teamRepo, userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
 	userSvc := service.NewUserService(userRepo, prRepo)
+	statsSvc := service.NewStatsService(statsRepo)
 
 	r := gin.Default()
 
-	handlers.RegisterRoutes(r, teamSvc, userSvc, prSvc)
+	handlers.RegisterRoutes(r, teamSvc, userSvc, prSvc, statsSvc)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

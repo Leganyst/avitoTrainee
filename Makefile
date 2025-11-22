@@ -28,7 +28,7 @@ unit-test:
 test-integration:
 	docker compose -f test/docker-compose.integration.yml down
 	docker compose -f test/docker-compose.integration.yml up -d 
-	go test ./test -coverpkg=./internal/service/...,./internal/repository/... -coverprofile=integration-cover.out
+	go test ./test -coverpkg=./internal/service/...,./internal/repository/...,./internal/controller/handlers/... -coverprofile=integration-cover.out
 	go tool cover -html=integration-cover.out
 	docker compose -f test/docker-compose.integration.yml down
 

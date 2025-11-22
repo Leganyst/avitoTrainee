@@ -183,6 +183,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/stats/assignments/by-pr": {
+            "get": {
+                "description": "Возвращает список PR с количеством назначенных ревьюверов. Список отсортирован по числу ревьюверов по убыванию.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stats"
+                ],
+                "summary": "Статистика назначений по PR",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AssignmentByPRResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/stats/assignments/by-user": {
+            "get": {
+                "description": "Возвращает список пользователей с количеством назначений на ревью. Пользователи сортируются по количеству назначений по убыванию.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Stats"
+                ],
+                "summary": "Статистика назначений по пользователям",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/AssignmentByUserResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/team/add": {
             "post": {
                 "description": "Создаёт команду и пользователей, если их ещё нет.",
@@ -380,9 +438,96 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/healthcheck": {
+            "get": {
+                "description": "Returns service health status.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health Check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "AssignmentByPR": {
+            "description": "Количество назначений по PR.",
+            "type": "object",
+            "properties": {
+                "pull_request_id": {
+                    "description": "Идентификатор PR.",
+                    "type": "string",
+                    "example": "pr-1001"
+                },
+                "pull_request_name": {
+                    "description": "Название PR.",
+                    "type": "string",
+                    "example": "Add search endpoint"
+                },
+                "reviewer_count": {
+                    "description": "Число назначенных ревьюверов для PR.",
+                    "type": "integer",
+                    "example": 2
+                }
+            }
+        },
+        "AssignmentByPRResponse": {
+            "description": "Ответ со списком назначений по PR.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AssignmentByPR"
+                    }
+                }
+            }
+        },
+        "AssignmentByUser": {
+            "description": "Количество назначений по пользователям.",
+            "type": "object",
+            "properties": {
+                "assignments": {
+                    "description": "Сколько раз этот пользователь назначался ревьювером.",
+                    "type": "integer",
+                    "example": 3
+                },
+                "user_id": {
+                    "description": "user_id ревьювера.",
+                    "type": "string",
+                    "example": "u1"
+                },
+                "username": {
+                    "description": "username ревьювера.",
+                    "type": "string",
+                    "example": "Alice"
+                }
+            }
+        },
+        "AssignmentByUserResponse": {
+            "description": "Ответ со списком назначений по пользователям.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AssignmentByUser"
+                    }
+                }
+            }
+        },
         "CreatePRRequest": {
             "description": "Запрос на создание PR.",
             "type": "object",
