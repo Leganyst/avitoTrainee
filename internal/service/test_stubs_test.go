@@ -15,6 +15,7 @@ type stubUserRepo struct {
 	usersByTeam  map[uint][]model.User
 	activeErr    error
 	created      []model.User
+	bulkErr      error
 }
 
 func (s *stubUserRepo) CreateOrUpdate(user *model.User) error {
@@ -68,6 +69,40 @@ func (s *stubUserRepo) GetActiveUsersByTeam(teamID uint) ([]model.User, error) {
 	copy(cpy, users)
 	return cpy, nil
 }
+func (s *stubUserRepo) BulkDeactivate(teamID uint, userIDs []string) ([]model.User, error) {
+	if s.bulkErr != nil {
+		return nil, s.bulkErr
+	}
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+
+	idSet := make(map[string]struct{}, len(userIDs))
+	for _, id := range userIDs {
+		idSet[id] = struct{}{}
+	}
+
+	var res []model.User
+	for _, u := range s.users {
+		if u.TeamID != teamID {
+			continue
+		}
+		if _, ok := idSet[u.UserID]; !ok {
+			continue
+		}
+		if !u.IsActive {
+			continue
+		}
+		cpy := *u
+		cpy.IsActive = false
+		res = append(res, cpy)
+	}
+
+	if len(res) == 0 {
+		return nil, repoerrs.ErrNotFound
+	}
+	return res, nil
+}
 
 // ----- PR repository stub -----
 type stubPRRepo struct {
@@ -86,6 +121,8 @@ type stubPRRepo struct {
 	addReviewersCall bool
 	prsByReviewer    []model.PullRequest
 	prsErr           error
+	openPRs          []model.PullRequest
+	openPRsErr       error
 }
 
 func (s *stubPRRepo) CreatePR(pr *model.PullRequest) error {
@@ -136,6 +173,14 @@ func (s *stubPRRepo) GetPRsWhereReviewer(userID uint) ([]model.PullRequest, erro
 	}
 	cpy := make([]model.PullRequest, len(s.prsByReviewer))
 	copy(cpy, s.prsByReviewer)
+	return cpy, nil
+}
+func (s *stubPRRepo) GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.PullRequest, error) {
+	if s.openPRsErr != nil {
+		return nil, s.openPRsErr
+	}
+	cpy := make([]model.PullRequest, len(s.openPRs))
+	copy(cpy, s.openPRs)
 	return cpy, nil
 }
 

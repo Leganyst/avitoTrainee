@@ -48,6 +48,45 @@ definitions:
           $ref: '#/definitions/AssignmentByUser'
         type: array
     type: object
+  BulkDeactivateRequest:
+    description: Запрос на массовую деактивацию пользователей команды.
+    properties:
+      team_name:
+        description: Имя команды, в которой отключаются пользователи.
+        example: backend
+        type: string
+      user_ids:
+        description: user_id пользователей для деактивации.
+        example:
+        - u1
+        - u2
+        - u3
+        items:
+          type: string
+        type: array
+    required:
+    - team_name
+    - user_ids
+    type: object
+  BulkDeactivateResponse:
+    description: Ответ на массовую деактивацию.
+    properties:
+      affected_prs:
+        description: Сколько открытых PR затронуто.
+        type: integer
+      deactivated:
+        description: Сколько пользователей деактивировано.
+        type: integer
+      reassigned:
+        description: Сколько замен ревьюверов выполнено.
+        type: integer
+      skipped:
+        description: Сколько замен пропущено из-за отсутствия кандидатов.
+        type: integer
+      team:
+        description: Имя команды.
+        type: string
+    type: object
   CreatePRRequest:
     description: Запрос на создание PR.
     properties:
@@ -567,6 +606,41 @@ paths:
       summary: Получить команду
       tags:
       - Teams
+  /api/users/bulkDeactivate:
+    post:
+      consumes:
+      - application/json
+      description: Деактивирует переданный список user_id внутри команды и безопасно
+        переназначает их в открытых PR (если найдены кандидаты).
+      parameters:
+      - description: Команда и user_id
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/BulkDeactivateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/BulkDeactivateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Массовая деактивация пользователей команды
+      tags:
+      - Users
   /api/users/getReview:
     get:
       consumes:

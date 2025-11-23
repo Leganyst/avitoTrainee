@@ -218,6 +218,88 @@ func TestPRController_Reassign_Errors(t *testing.T) {
 	})
 }
 
+// Нагрузочная проверка массовой деактивации и безопасных переназначений.
+// Средний объём данных: 10 команд по 10 активных ревьюверов (100 пользователей) и 30 открытых PR.
+// Требование: уложиться в 100 мс на операцию деактивации в этом объёме.
+func TestUserController_BulkDeactivate_Load(t *testing.T) {
+	server := newAPITestServer(t)
+
+	const (
+		teamCount       = 10
+		membersPerTeam  = 10
+		openPRs         = 30
+		maxDuration     = 100 * time.Millisecond
+		targetTeamName  = "team-01"
+		targetAuthorID  = "team-01-1"
+		deactivatedUIDs = 5
+	)
+
+	// Готовим команды и пользователей.
+	for teamIdx := 1; teamIdx <= teamCount; teamIdx++ {
+		teamName := fmt.Sprintf("team-%02d", teamIdx)
+		payload := dto.CreateTeamRequest{
+			TeamName: teamName,
+			Members:  make([]dto.TeamMember, 0, membersPerTeam),
+		}
+		for userIdx := 1; userIdx <= membersPerTeam; userIdx++ {
+			payload.Members = append(payload.Members, dto.TeamMember{
+				UserID:   fmt.Sprintf("%s-%d", teamName, userIdx),
+				Username: fmt.Sprintf("User-%02d-%02d", teamIdx, userIdx),
+				IsActive: true,
+			})
+		}
+		body, _ := json.Marshal(payload)
+		resp := server.doRequest(newJSONRequest(t, http.MethodPost, "/api/team/add", string(body)))
+		if resp.Code != http.StatusCreated {
+			t.Fatalf("create team %s status = %d", teamName, resp.Code)
+		}
+	}
+
+	// Создаём 30 открытых PR для целевой команды, чтобы были назначенные ревьюверы.
+	for prIdx := 1; prIdx <= openPRs; prIdx++ {
+		payload := dto.CreatePRRequest{
+			PRID:   fmt.Sprintf("pr-load-%02d", prIdx),
+			Name:   fmt.Sprintf("Feature-%02d", prIdx),
+			Author: targetAuthorID,
+		}
+		body, _ := json.Marshal(payload)
+		resp := server.doRequest(newJSONRequest(t, http.MethodPost, "/api/pullRequest/create", string(body)))
+		if resp.Code != http.StatusCreated {
+			t.Fatalf("create PR %d status = %d", prIdx, resp.Code)
+		}
+	}
+
+	// Деактивируем 5 ревьюверов команды targetTeamName.
+	userIDs := make([]string, 0, deactivatedUIDs)
+	for i := 2; i < 2+deactivatedUIDs; i++ { // начиная со второго, чтобы автор остался активным
+		userIDs = append(userIDs, fmt.Sprintf("%s-%d", targetTeamName, i))
+	}
+	body, _ := json.Marshal(dto.BulkDeactivateRequest{
+		TeamName: targetTeamName,
+		UserIDs:  userIDs,
+	})
+
+	start := time.Now()
+	resp := server.doRequest(newJSONRequest(t, http.MethodPost, "/api/users/bulkDeactivate", string(body)))
+	duration := time.Since(start)
+
+	if resp.Code != http.StatusOK {
+		t.Fatalf("bulk deactivate status = %d", resp.Code)
+	}
+
+	if duration > maxDuration {
+		t.Fatalf("bulk deactivate duration %s exceeds %s", duration, maxDuration)
+	}
+
+	result := decodeBody[dto.BulkDeactivateResponse](t, resp.Body)
+	if result.Deactivated != deactivatedUIDs {
+		t.Fatalf("deactivated = %d, want %d", result.Deactivated, deactivatedUIDs)
+	}
+	if result.Team != targetTeamName {
+		t.Fatalf("team mismatch: %s", result.Team)
+	}
+}
+
 // setupTeamAndPR создаёт команду с указанным размером и один PR с автором.
 func setupTeamAndPR(t *testing.T, server *apiTestServer, teamName, authorID string, members int) {
 	t.Helper()

@@ -17,6 +17,7 @@ type (
 		SetActive(userID string, active bool) (*model.User, error)
 
 		GetActiveUsersByTeam(teamID uint) ([]model.User, error)
+		BulkDeactivate(teamID uint, userIDs []string) ([]model.User, error)
 	}
 
 	GormUserRepository struct {
@@ -107,4 +108,36 @@ func (r *GormUserRepository) GetByUserID(userID string) (*model.User, error) {
 	}
 	config.Logger().Debugw("db user loaded", "user_id", userID, "team_id", user.TeamID)
 	return &user, nil
+}
+
+func (r *GormUserRepository) BulkDeactivate(teamID uint, userIDs []string) ([]model.User, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+
+	var users []model.User
+	if err := r.db.
+		Where("team_id = ? AND user_id IN ? AND is_active = true", teamID, userIDs).
+		Find(&users).Error; err != nil {
+		config.Logger().Errorw("db find users for bulk deactivate failed", "team_id", teamID, "user_ids", userIDs, "error", err)
+		return nil, err
+	}
+	if len(users) == 0 {
+		return nil, repoerrs.ErrNotFound
+	}
+
+	ids := make([]uint, 0, len(users))
+	for _, u := range users {
+		ids = append(ids, u.ID)
+	}
+
+	if err := r.db.Model(&model.User{}).
+		Where("id IN ?", ids).
+		Update("is_active", false).Error; err != nil {
+		config.Logger().Errorw("db bulk deactivate failed", "ids", ids, "error", err)
+		return nil, err
+	}
+
+	config.Logger().Infow("db bulk deactivate completed", "count", len(users), "team_id", teamID)
+	return users, nil
 }

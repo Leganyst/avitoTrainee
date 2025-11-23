@@ -30,14 +30,16 @@ func newAPITestServer(t *testing.T) *apiTestServer {
 	teamRepo := repository.NewTeamRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	prRepo := repository.NewPRRepository(db)
+	statsRepo := repository.NewStatsRepository(db)
 
 	teamSvc := service.NewTeamService(teamRepo, userRepo)
-	userSvc := service.NewUserService(userRepo, prRepo)
+	userSvc := service.NewUserService(userRepo, prRepo, teamRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
+	statsSvc := service.NewStatsService(statsRepo)
 
 	router := gin.New()
 	router.Use(gin.Recovery())
-	handlers.RegisterRoutes(router, teamSvc, userSvc, prSvc)
+	handlers.RegisterRoutes(router, teamSvc, userSvc, prSvc, statsSvc)
 
 	return &apiTestServer{router: router}
 }

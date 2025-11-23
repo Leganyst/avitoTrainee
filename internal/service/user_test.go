@@ -24,6 +24,9 @@ func (s *stubUserPRRepo) ReplaceReviewer(pr *model.PullRequest, oldReviewerID ui
 }
 func (s *stubUserPRRepo) GetPRByExternalID(prID string) (*model.PullRequest, error) { return nil, nil }
 func (s *stubUserPRRepo) UpdatePR(pr *model.PullRequest) error                      { return nil }
+func (s *stubUserPRRepo) GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.PullRequest, error) {
+	return nil, nil
+}
 
 func (s *stubUserPRRepo) GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error) {
 	s.called = true
@@ -39,7 +42,7 @@ func TestUserService_SetActive_Success(t *testing.T) {
 			"u1": {UserID: "u1", IsActive: false},
 		},
 	}
-	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}}
+	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}, teamRepo: &stubTeamRepo{}}
 
 	user, err := svc.SetActive("u1", true)
 	if err != nil {
@@ -54,7 +57,7 @@ func TestUserService_SetActive_NotFound(t *testing.T) {
 	repo := &stubUserRepo{
 		setActiveErr: repoerrs.ErrNotFound,
 	}
-	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}}
+	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}, teamRepo: &stubTeamRepo{}}
 
 	_, err := svc.SetActive("missing", true)
 	if err == nil {
@@ -70,7 +73,7 @@ func TestUserService_GetUserByID_Success(t *testing.T) {
 	repo := &stubUserRepo{
 		users: map[string]*model.User{"u1": expected},
 	}
-	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}}
+	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}, teamRepo: &stubTeamRepo{}}
 
 	user, err := svc.GetUserByID("u1")
 	if err != nil {
@@ -85,7 +88,7 @@ func TestUserService_GetUserByID_NotFound(t *testing.T) {
 	repo := &stubUserRepo{
 		getErrFor: map[string]error{"missing": repoerrs.ErrNotFound},
 	}
-	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}}
+	svc := userService{userRepo: repo, prRepo: &stubUserPRRepo{}, teamRepo: &stubTeamRepo{}}
 
 	_, err := svc.GetUserByID("missing")
 	if err == nil {
@@ -102,7 +105,7 @@ func TestUserService_GetUserReviews_Success(t *testing.T) {
 	prRepo := &stubUserPRRepo{
 		prs: []model.PullRequest{{PRID: "pr-1"}},
 	}
-	svc := userService{userRepo: userRepo, prRepo: prRepo}
+	svc := userService{userRepo: userRepo, prRepo: prRepo, teamRepo: &stubTeamRepo{}}
 
 	prs, err := svc.GetUserReviews("u1")
 	if err != nil {
@@ -121,7 +124,7 @@ func TestUserService_GetUserReviews_UserNotFound(t *testing.T) {
 		getErrFor: map[string]error{"missing": repoerrs.ErrNotFound},
 	}
 	prRepo := &stubUserPRRepo{}
-	svc := userService{userRepo: userRepo, prRepo: prRepo}
+	svc := userService{userRepo: userRepo, prRepo: prRepo, teamRepo: &stubTeamRepo{}}
 
 	_, err := svc.GetUserReviews("missing")
 	if err == nil {
@@ -139,7 +142,7 @@ func TestUserService_GetUserReviews_PRRepoError(t *testing.T) {
 	user := &model.User{ID: 10, UserID: "u1"}
 	userRepo := &stubUserRepo{users: map[string]*model.User{"u1": user}}
 	prRepo := &stubUserPRRepo{prErr: errors.New("db error")}
-	svc := userService{userRepo: userRepo, prRepo: prRepo}
+	svc := userService{userRepo: userRepo, prRepo: prRepo, teamRepo: &stubTeamRepo{}}
 
 	_, err := svc.GetUserReviews("u1")
 	if err == nil {

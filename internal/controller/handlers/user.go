@@ -25,6 +25,7 @@ func registerUserRoutes(r gin.IRouter, userSvc service.UserService) {
 	group := r.Group("/users")
 	group.POST("/setIsActive", handler.SetActive)
 	group.GET("/getReview", handler.GetUserReviews)
+	group.POST("/bulkDeactivate", handler.BulkDeactivate)
 }
 
 // SetActive godoc
@@ -100,7 +101,52 @@ func (h *UserHandler) handleDomainError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, serviceerrs.ErrUserNotFound):
 		writeError(c, http.StatusNotFound, errorCodeNotFound, err.Error())
+	case errors.Is(err, serviceerrs.ErrTeamNotFound):
+		writeError(c, http.StatusNotFound, errorCodeNotFound, err.Error())
 	default:
 		writeError(c, http.StatusInternalServerError, errorCodeInternal, "internal error")
 	}
+}
+
+// BulkDeactivate godoc
+// @Summary      Массовая деактивация пользователей команды
+// @Description  Деактивирует переданный список user_id внутри команды и безопасно переназначает их в открытых PR (если найдены кандидаты).
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.BulkDeactivateRequest  true  "Команда и user_id"
+// @Success      200      {object}  dto.BulkDeactivateResponse
+// @Failure      400      {object}  dto.ErrorResponse
+// @Failure      404      {object}  dto.ErrorResponse
+// @Failure      500      {object}  dto.ErrorResponse
+// @Router       /api/users/bulkDeactivate [post]
+func (h *UserHandler) BulkDeactivate(c *gin.Context) {
+	log := logger(c)
+	var req dto.BulkDeactivateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Warnw("invalid bulk deactivate payload", "error", err)
+		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "invalid request payload")
+		return
+	}
+	if req.TeamName == "" || len(req.UserIDs) == 0 {
+		log.Warnw("missing fields in bulk deactivate", "payload", req)
+		writeError(c, http.StatusBadRequest, errorCodeBadRequest, "team_name and user_ids are required")
+		return
+	}
+
+	result, err := h.userSvc.BulkDeactivate(req.TeamName, req.UserIDs)
+	if err != nil {
+		log.Errorw("bulk deactivate failed", "team", req.TeamName, "error", err)
+		h.handleDomainError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.BulkDeactivateResponse{
+		Team:        result.TeamName,
+		Deactivated: result.DeactivatedUsers,
+		Reassigned:  result.ReassignmentsDone,
+		Skipped:     result.ReassignmentsSkipped,
+		AffectedPRs: result.AffectedPullRequests,
+	})
+	log.Infow("bulk deactivate completed", "team", req.TeamName, "deactivated", result.DeactivatedUsers, "reassigned", result.ReassignmentsDone, "skipped", result.ReassignmentsSkipped, "prs", result.AffectedPullRequests)
 }

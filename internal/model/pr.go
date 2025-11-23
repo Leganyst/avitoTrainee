@@ -8,7 +8,7 @@ type PullRequest struct {
 
 	Name     string `gorm:"not null"`
 	Status   string `gorm:"not null"`
-	AuthorID uint   `gorm:"not null"`
+	AuthorID uint   `gorm:"not null;index"`
 
 	Author User `gorm:"constraint:OnDelete:CASCADE"`
 
@@ -18,7 +18,7 @@ type PullRequest struct {
 			pull_request_id (uint)
 			user_id (uint)
 	*/
-	AssignedReviewers []User `gorm:"many2many:pr_reviewers;joinForeignKey:PullRequestID;joinReferences:UserID"`
+	AssignedReviewers []User `gorm:"many2many:pr_reviewers;joinForeignKey:PullRequestID;joinReferences:UserID;index"`
 
 	CreatedAt time.Time
 	UpdatedAt *time.Time

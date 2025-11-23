@@ -20,6 +20,7 @@ type (
 		ReplaceReviewer(pr *model.PullRequest, oldReviewerID uint, newReviewer model.User) error
 
 		GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error)
+		GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.PullRequest, error)
 	}
 
 	GormPRRepository struct {
@@ -125,6 +126,28 @@ func (r *GormPRRepository) GetPRsWhereReviewer(userID uint) ([]model.PullRequest
 	}
 	config.Logger().Debugw("db PRs for reviewer loaded", "user_id", userID, "count", len(prs))
 	return prs, err
+}
+
+func (r *GormPRRepository) GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.PullRequest, error) {
+	if len(reviewerIDs) == 0 {
+		return nil, nil
+	}
+
+	var prs []model.PullRequest
+	err := r.db.
+		Model(&model.PullRequest{}).
+		Joins("JOIN pr_reviewers ON pr_reviewers.pull_request_id = pull_requests.id").
+		Where("pr_reviewers.user_id IN ?", reviewerIDs).
+		Where("pull_requests.status = ?", "OPEN").
+		Preload("Author").
+		Preload("AssignedReviewers").
+		Find(&prs).Error
+	if err != nil {
+		config.Logger().Errorw("db open PRs by reviewer ids failed", "reviewer_ids", reviewerIDs, "error", err)
+		return nil, err
+	}
+	config.Logger().Debugw("db open PRs by reviewer ids loaded", "reviewer_ids_len", len(reviewerIDs), "prs", len(prs))
+	return prs, nil
 }
 
 func isUniqueViolation(err error) bool {

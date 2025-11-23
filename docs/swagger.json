@@ -330,6 +330,58 @@
                 }
             }
         },
+        "/api/users/bulkDeactivate": {
+            "post": {
+                "description": "Деактивирует переданный список user_id внутри команды и безопасно переназначает их в открытых PR (если найдены кандидаты).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Массовая деактивация пользователей команды",
+                "parameters": [
+                    {
+                        "description": "Команда и user_id",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/BulkDeactivateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/BulkDeactivateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/users/getReview": {
             "get": {
                 "description": "Возвращает PR, где пользователь выступает ревьювером.",
@@ -518,6 +570,59 @@
                     "items": {
                         "$ref": "#/definitions/AssignmentByUser"
                     }
+                }
+            }
+        },
+        "BulkDeactivateRequest": {
+            "description": "Запрос на массовую деактивацию пользователей команды.",
+            "type": "object",
+            "required": [
+                "team_name",
+                "user_ids"
+            ],
+            "properties": {
+                "team_name": {
+                    "description": "Имя команды, в которой отключаются пользователи.",
+                    "type": "string",
+                    "example": "backend"
+                },
+                "user_ids": {
+                    "description": "user_id пользователей для деактивации.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "u1",
+                        "u2",
+                        "u3"
+                    ]
+                }
+            }
+        },
+        "BulkDeactivateResponse": {
+            "description": "Ответ на массовую деактивацию.",
+            "type": "object",
+            "properties": {
+                "affected_prs": {
+                    "description": "Сколько открытых PR затронуто.",
+                    "type": "integer"
+                },
+                "deactivated": {
+                    "description": "Сколько пользователей деактивировано.",
+                    "type": "integer"
+                },
+                "reassigned": {
+                    "description": "Сколько замен ревьюверов выполнено.",
+                    "type": "integer"
+                },
+                "skipped": {
+                    "description": "Сколько замен пропущено из-за отсутствия кандидатов.",
+                    "type": "integer"
+                },
+                "team": {
+                    "description": "Имя команды.",
+                    "type": "string"
                 }
             }
         },

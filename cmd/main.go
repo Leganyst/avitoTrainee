@@ -44,7 +44,7 @@ func main() {
 
 	teamSvc := service.NewTeamService(teamRepo, userRepo)
 	prSvc := service.NewPrService(prRepo, userRepo)
-	userSvc := service.NewUserService(userRepo, prRepo)
+	userSvc := service.NewUserService(userRepo, prRepo, teamRepo)
 	statsSvc := service.NewStatsService(statsRepo)
 
 	r := gin.Default()
