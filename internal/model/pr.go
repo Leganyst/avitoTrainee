@@ -18,7 +18,7 @@ type PullRequest struct {
 			pull_request_id (uint)
 			user_id (uint)
 	*/
-	AssignedReviewers []User `gorm:"many2many:pr_reviewers;joinForeignKey:PullRequestID;joinReferences:UserID;index"`
+	AssignedReviewers []User `gorm:"many2many:pr_reviewers;joinForeignKey:PullRequestID;joinReferences:UserID"`
 
 	CreatedAt time.Time
 	UpdatedAt *time.Time
