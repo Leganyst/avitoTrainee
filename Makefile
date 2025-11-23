@@ -32,7 +32,7 @@ docs:
 	$(SWAG) init -g cmd/main.go -o docs
 
 # Полный запуск: подготовка .env, генерация docs, сборка, рестарт контейнеров.
-up: ensure-env docs build docker-down docker-up-detached
+up: ensure-env docs build docker-down docker-build docker-up-detached
 
 run: build
 	if [ -f $(ENV_FILE) ]; then export $$(grep -v '^#' $(ENV_FILE) | xargs); fi; $(BIN)
@@ -57,8 +57,9 @@ integration-test:
 integration-cover:
 	docker compose -f $(INTEGRATION_COMPOSE) down
 	docker compose -f $(INTEGRATION_COMPOSE) up -d
+	@sleep 5
 	go test ./test -coverpkg=./internal/service/...,./internal/repository/...,./internal/controller/handlers/... -coverprofile=integration-cover.out
-	go tool cover -html=integration-cover.out -o integration-coverage.html
+	go tool cover -html=integration-cover.out
 	@echo "Integration coverage report: integration-coverage.html"
 	docker compose -f $(INTEGRATION_COMPOSE) down
 

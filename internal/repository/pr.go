@@ -8,6 +8,7 @@ import (
 	"github.com/Leganyst/avitoTrainee/internal/model"
 	repoerrs "github.com/Leganyst/avitoTrainee/internal/repository/errs"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type (
@@ -18,6 +19,7 @@ type (
 
 		AddReviewers(pr *model.PullRequest, reviewers []model.User) error
 		ReplaceReviewer(pr *model.PullRequest, oldReviewerID uint, newReviewer model.User) error
+		ReplaceReviewers(prID uint, reviewerIDs []uint) error
 
 		GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error)
 		GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.PullRequest, error)
@@ -78,14 +80,19 @@ func (r *GormPRRepository) UpdatePR(pr *model.PullRequest) error {
 }
 
 func (r *GormPRRepository) AddReviewers(pr *model.PullRequest, reviewers []model.User) error {
-	reviewersInterface := make([]interface{}, len(reviewers))
-
-	for i, reviewer := range reviewers {
-		reviewerCopy := reviewer
-		reviewersInterface[i] = &reviewerCopy
+	if len(reviewers) == 0 {
+		return nil
 	}
 
-	if err := r.db.Model(pr).Association("AssignedReviewers").Append(reviewersInterface...); err != nil {
+	rows := make([]map[string]interface{}, 0, len(reviewers))
+	for _, reviewer := range reviewers {
+		rows = append(rows, map[string]interface{}{
+			"pull_request_id": pr.ID,
+			"user_id":         reviewer.ID,
+		})
+	}
+
+	if err := r.db.Table("pr_reviewers").Clauses(clause.OnConflict{DoNothing: true}).Create(&rows).Error; err != nil {
 		config.Logger().Errorw("db append reviewers failed", "pr_id", pr.PRID, "error", err)
 		return err
 	}
@@ -108,6 +115,31 @@ func (r *GormPRRepository) ReplaceReviewer(pr *model.PullRequest, oldReviewerID 
 	}
 	config.Logger().Debugw("db reviewer replaced", "pr_id", pr.PRID, "old_user", oldReviewerID, "new_user", newReviewer.UserID)
 	return nil
+}
+
+// ReplaceReviewers заменяет весь список ревьюверов за один проход.
+func (r *GormPRRepository) ReplaceReviewers(prID uint, reviewerIDs []uint) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("pull_request_id = ?", prID).Delete(&model.PRReviewer{}).Error; err != nil {
+			return err
+		}
+		if len(reviewerIDs) == 0 {
+			return nil
+		}
+
+		rows := make([]map[string]interface{}, 0, len(reviewerIDs))
+		for _, id := range reviewerIDs {
+			rows = append(rows, map[string]interface{}{
+				"pull_request_id": prID,
+				"user_id":         id,
+			})
+		}
+
+		if err := tx.Table("pr_reviewers").Clauses(clause.OnConflict{DoNothing: true}).Create(&rows).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (r *GormPRRepository) GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error) {
@@ -136,6 +168,7 @@ func (r *GormPRRepository) GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.
 	var prs []model.PullRequest
 	err := r.db.
 		Model(&model.PullRequest{}).
+		Distinct("pull_requests.id").
 		Joins("JOIN pr_reviewers ON pr_reviewers.pull_request_id = pull_requests.id").
 		Where("pr_reviewers.user_id IN ?", reviewerIDs).
 		Where("pull_requests.status = ?", "OPEN").

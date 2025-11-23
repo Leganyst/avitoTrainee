@@ -30,10 +30,10 @@ type (
 	}
 
 	userService struct {
-		userRepo repository.UserRepository
-		prRepo   repository.PRRepository
-		teamRepo repository.TeamRepository
-	}
+	userRepo repository.UserRepository
+	prRepo   repository.PRRepository
+	teamRepo repository.TeamRepository
+}
 
 	BulkDeactivateResult struct {
 		TeamName             string
@@ -148,6 +148,18 @@ func (s *userService) BulkDeactivate(teamName string, userIDs []string) (*BulkDe
 		return nil, err
 	}
 
+	activeUsers, err := s.userRepo.GetActiveUsersByTeam(team.ID)
+	if err != nil {
+		logger.Errorw("bulk deactivate list active users failed", "team_name", teamName, "error", err)
+		return nil, err
+	}
+
+	// Подготовим кэш активных пользователей команды (по ID) для быстрой замены.
+	activeByID := make(map[uint]model.User, len(activeUsers))
+	for _, u := range activeUsers {
+		activeByID[u.ID] = u
+	}
+
 	result := &BulkDeactivateResult{
 		TeamName:         teamName,
 		DeactivatedUsers: len(toDeactivate),
@@ -157,35 +169,32 @@ func (s *userService) BulkDeactivate(teamName string, userIDs []string) (*BulkDe
 		pr := &prs[i]
 		affected := false
 
-		for idx, reviewer := range pr.AssignedReviewers {
-			if _, shouldReplace := deactivatedByID[reviewer.ID]; !shouldReplace {
+		newReviewers := make([]uint, 0, len(pr.AssignedReviewers))
+		excluded := make(map[uint]struct{}, len(pr.AssignedReviewers)+2)
+		excluded[pr.AuthorID] = struct{}{}
+
+		for _, reviewer := range pr.AssignedReviewers {
+			if _, isDeactivated := deactivatedByID[reviewer.ID]; !isDeactivated {
+				newReviewers = append(newReviewers, reviewer.ID)
+				excluded[reviewer.ID] = struct{}{}
 				continue
 			}
 
-			excluded := make(map[uint]struct{}, len(pr.AssignedReviewers)+2)
-			excluded[pr.AuthorID] = struct{}{}
-			for _, r := range pr.AssignedReviewers {
-				excluded[r.ID] = struct{}{}
-			}
-
-			candidate, err := s.selectReplacementCandidate(reviewer.TeamID, excluded)
-			if err != nil {
-				logger.Errorw("bulk deactivate select replacement failed", "pr_id", pr.PRID, "old_user", reviewer.UserID, "error", err)
-				return nil, err
-			}
+			candidate := selectReplacementCandidateCached(activeByID, excluded)
 			if candidate == nil {
 				result.ReassignmentsSkipped++
 				continue
 			}
 
-			if err := s.prRepo.ReplaceReviewer(pr, reviewer.ID, *candidate); err != nil {
-				logger.Errorw("bulk replace reviewer failed", "pr_id", pr.PRID, "old_user", reviewer.UserID, "new_user", candidate.UserID, "error", err)
-				return nil, err
-			}
-
-			pr.AssignedReviewers[idx] = *candidate
+			newReviewers = append(newReviewers, candidate.ID)
+			excluded[candidate.ID] = struct{}{}
 			result.ReassignmentsDone++
 			affected = true
+		}
+
+		if err := s.prRepo.ReplaceReviewers(pr.ID, newReviewers); err != nil {
+			logger.Errorw("bulk replace reviewers failed", "pr_id", pr.PRID, "error", err)
+			return nil, err
 		}
 
 		if affected {
@@ -197,18 +206,13 @@ func (s *userService) BulkDeactivate(teamName string, userIDs []string) (*BulkDe
 	return result, nil
 }
 
-// selectReplacementCandidate выбирает активного пользователя команды с учётом исключений.
-func (s *userService) selectReplacementCandidate(teamID uint, excluded map[uint]struct{}) (*model.User, error) {
-	users, err := s.userRepo.GetActiveUsersByTeam(teamID)
-	if err != nil {
-		return nil, err
-	}
-
+// selectReplacementCandidateCached выбирает активного пользователя команды с учётом исключений по заранее загруженному кэшу.
+func selectReplacementCandidateCached(users map[uint]model.User, excluded map[uint]struct{}) *model.User {
 	for _, u := range users {
 		if _, skip := excluded[u.ID]; skip {
 			continue
 		}
-		return &u, nil
+		return &u
 	}
-	return nil, nil
+	return nil
 }

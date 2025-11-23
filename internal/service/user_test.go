@@ -27,6 +27,7 @@ func (s *stubUserPRRepo) UpdatePR(pr *model.PullRequest) error                  
 func (s *stubUserPRRepo) GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.PullRequest, error) {
 	return nil, nil
 }
+func (s *stubUserPRRepo) ReplaceReviewers(prID uint, reviewerIDs []uint) error { return nil }
 
 func (s *stubUserPRRepo) GetPRsWhereReviewer(userID uint) ([]model.PullRequest, error) {
 	s.called = true

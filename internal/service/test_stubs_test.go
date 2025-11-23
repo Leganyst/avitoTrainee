@@ -123,6 +123,7 @@ type stubPRRepo struct {
 	prsErr           error
 	openPRs          []model.PullRequest
 	openPRsErr       error
+	replaceBulkErr   error
 }
 
 func (s *stubPRRepo) CreatePR(pr *model.PullRequest) error {
@@ -182,6 +183,13 @@ func (s *stubPRRepo) GetOpenPRsByReviewerIDs(reviewerIDs []uint) ([]model.PullRe
 	cpy := make([]model.PullRequest, len(s.openPRs))
 	copy(cpy, s.openPRs)
 	return cpy, nil
+}
+func (s *stubPRRepo) ReplaceReviewers(prID uint, reviewerIDs []uint) error {
+	if s.replaceBulkErr != nil {
+		return s.replaceBulkErr
+	}
+	s.replacedCalled = true
+	return nil
 }
 
 // ----- Team repository stub -----

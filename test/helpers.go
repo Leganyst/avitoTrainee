@@ -38,6 +38,7 @@ func migrateTestDB(t *testing.T, db *gorm.DB) {
 		&model.Team{},
 		&model.User{},
 		&model.PullRequest{},
+		&model.PRReviewer{},
 	); err != nil {
 		t.Fatalf("auto migrate failed: %v", err)
 	}
@@ -53,8 +54,10 @@ func getenv(key, def string) string {
 func prepareDB(t *testing.T, db *gorm.DB) {
 	t.Helper()
 
+	_ = db.Migrator().DropTable("pr_reviewers")
+
 	err := db.Exec(
-		"TRUNCATE TABLE pr_reviewers, pull_requests, users, teams RESTART IDENTITY CASCADE",
+		"TRUNCATE TABLE pull_requests, users, teams RESTART IDENTITY CASCADE",
 	).Error
 
 	if err != nil {
